@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Kompweb</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+      padding-bottom: 46px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .row { display: flex; gap: 12px; }
+    .row .field { flex: 1; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+    label .req { color: #f97316; margin-left: 2px; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    textarea {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 15px;
+      font-family: inherit;
+      padding: 12px 15px;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      width: 100%;
+    }
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.35); font-size: 14px; }
+    input:focus, textarea:focus { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.09); }
+
+    textarea { min-height: 110px; resize: vertical; }
+
+    .privacy-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .privacy-row input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      accent-color: #a78bfa;
+      cursor: pointer;
+    }
+    .privacy-text {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.5;
+    }
+
+    #privacyErr7289282000000741190 {
+      font-size: 11px;
+      color: #f97316;
+      padding-left: 25px;
+      visibility: hidden;
+      margin-top: -8px;
+    }
+
+    .btn-row { display: flex; gap: 8px; }
+
+    .formsubmit {
+      flex: 1;
+      height: 42px;
+      background: #fff;
+      color: #000;
+      font-weight: 600;
+      font-size: 13px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .formsubmit:hover:not(:disabled) { background: rgba(255,255,255,0.88); }
+    .formsubmit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .resetbtn {
+      padding: 0 18px;
+      height: 42px;
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .resetbtn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    #successBanner {
+      display: none;
+      background: rgba(52,211,153,0.1);
+      border: 1px solid rgba(52,211,153,0.3);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    #successBanner .icon { font-size: 28px; margin-bottom: 8px; }
+    #successBanner p { color: rgba(255,255,255,0.8); font-size: 13px; }
+    #successBanner .sub { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 4px; }
+
+    #errorBanner {
+      display: none;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    #errorBanner .icon { font-size: 28px; margin-bottom: 8px; }
+    #errorBanner p { color: rgba(255,255,255,0.8); font-size: 13px; }
+    #errorBanner .sub { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 4px; }
+    #errorBanner .retry {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 20px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #errorBanner .retry:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+    .zcwf_hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div id="successBanner">
+  <div class="icon">✉️</div>
+  <p><strong style="color:#fff">Message received!</strong></p>
+  <p class="sub">We'll get back to you within 24 hours.</p>
+</div>
+
+<div id="errorBanner">
+  <div class="icon">⚠️</div>
+  <p><strong style="color:#fff">Something went wrong.</strong></p>
+  <p class="sub">Your message couldn't be sent. Please try again or email us directly at <strong style="color:rgba(255,255,255,0.7)">hello@kompweb.com</strong>.</p>
+  <button class="retry" onclick="showForm()">Try again</button>
+</div>
+
+<!-- Hidden iframe receives the Zoho response — avoids CORS on AJAX -->
+<iframe name="zoho_post_frame" style="display:none" aria-hidden="true"></iframe>
+
+<!-- Do not remove this code. -->
+<form id="webform7289282000000741190" name="WebToLeads7289282000000741190" accept-charset="UTF-8"
+  action="https://crm.zoho.com/crm/WebToLeadForm" method="POST" target="zoho_post_frame">
+  <input type="text" class="zcwf_hidden" name="xnQsjsdp" value="53b39add9588388d10c1d10c67426604db38fd4e3d1d712bf03035f47539f6be" />
+  <input type="hidden" name="zc_gad" id="zc_gad" value="" />
+  <input type="text" class="zcwf_hidden" name="xmIwtLD" value="62f296ce96a9f70589b71afec6b8d60a68a2a451480edf5d26649ef27f290c3207b90bb707317a3d1d669b5effc86ce8" />
+  <input type="text" class="zcwf_hidden" name="actionType" value="TGVhZHM=" />
+  <input type="text" class="zcwf_hidden" name="returnURL" value="null" />
+
+  <!-- UTM / tracking hidden fields — Do not remove -->
+  <input type="text" class="zcwf_hidden" id="LEADCF2" name="LEADCF2" maxlength="255" value="direct" />
+  <input type="text" class="zcwf_hidden" id="LEADCF3" name="LEADCF3" maxlength="255" value="none" />
+  <input type="text" class="zcwf_hidden" id="LEADCF4" name="LEADCF4" maxlength="255" value="none" />
+  <input type="text" class="zcwf_hidden" id="LEADCF6" name="LEADCF6" maxlength="255" value="none" />
+  <input type="text" class="zcwf_hidden" id="LEADCF5" name="LEADCF5" maxlength="255" value="none" />
+  <input type="text" class="zcwf_hidden" id="LEADCF1" name="LEADCF1" maxlength="255" value="none" />
+
+  <div class="row">
+    <div class="field">
+      <label for="Last_Name">Name <span class="req">*</span></label>
+      <input type="text" id="Last_Name" name="Last Name" placeholder="Jane Doe" maxlength="80" aria-required="true" />
+    </div>
+    <div class="field">
+      <label for="Mobile">Phone <span class="req">*</span></label>
+      <input type="tel" id="Mobile" name="Mobile" placeholder="+1 (555) 000-0000" maxlength="30" aria-required="true" />
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="Email">Email <span class="req">*</span></label>
+    <input type="text" ftype="email" id="Email" name="Email" placeholder="jane@company.com" maxlength="100" aria-required="true" autocomplete="off" />
+  </div>
+
+  <div class="field">
+    <label for="Description">Message <span class="req">*</span></label>
+    <textarea id="Description" name="Description" placeholder="Tell us about your project or how we can help..." aria-required="true"></textarea>
+  </div>
+
+  <!-- Honeypot — Do not remove this code -->
+  <input type="text" class="zcwf_hidden" name="aG9uZXlwb3Q" value="" />
+
+  <div class="privacy-row">
+    <input type="checkbox" id="privacyTool7289282000000741190" name="" aria-errormessage="privacyErr7289282000000741190" onclick="disableErr7289282000000741190()" />
+    <p class="privacy-text">By submitting this form, you agree that we may store and process the information you provide to respond to your inquiry. Your details will only be used for communication related to your request and will not be shared with third parties without your consent.</p>
+  </div>
+  <div id="privacyErr7289282000000741190">Please accept the privacy policy to continue.</div>
+
+  <div class="btn-row">
+    <input type="submit" id="formsubmit" class="formsubmit" value="Send Message" title="Send Message" />
+    <input type="reset" class="resetbtn" value="Reset" title="Reset" />
+  </div>
+</form>
+
+<script>
+  function showForm(){
+    document.getElementById('errorBanner').style.display = 'none';
+    document.getElementById('webform7289282000000741190').style.display = 'flex';
+  }
+
+  function privacyAlert7289282000000741190(){
+    var privacyTool = document.getElementById('privacyTool7289282000000741190');
+    var privacyErr  = document.getElementById('privacyErr7289282000000741190');
+    if(privacyTool != undefined && !privacyTool.checked){
+      privacyErr.style.visibility = 'visible';
+      privacyTool.ariaInvalid = 'true';
+      privacyTool.focus();
+      return false;
+    }
+    return true;
+  }
+
+  function disableErr7289282000000741190(){
+    var privacyTool = document.getElementById('privacyTool7289282000000741190');
+    var privacyErr  = document.getElementById('privacyErr7289282000000741190');
+    if(privacyTool != undefined && privacyTool.checked && privacyErr != undefined){
+      privacyErr.style.visibility = 'hidden';
+      privacyTool.ariaInvalid = 'false';
+    }
+  }
+
+  function validateEmail7289282000000741190(){
+    var form = document.forms['WebToLeads7289282000000741190'];
+    var emailFld = form.querySelectorAll('[ftype=email]');
+    for(var i = 0; i < emailFld.length; i++){
+      var emailVal = emailFld[i].value;
+      if((emailVal.replace(/^\s+|\s+$/g,'')).length != 0){
+        var atpos  = emailVal.indexOf('@');
+        var dotpos = emailVal.lastIndexOf('.');
+        if(atpos < 1 || dotpos < atpos + 2 || dotpos + 2 >= emailVal.length){
+          alert('Please enter a valid email address.');
+          emailFld[i].focus();
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function checkMandatory7289282000000741190(){
+    var mndFileds  = new Array('Last Name','Email','Mobile','Description');
+    var fldLangVal = new Array('Name','Email','Phone','Message');
+    for(var i = 0; i < mndFileds.length; i++){
+      var fieldObj = document.forms['WebToLeads7289282000000741190'][mndFileds[i]];
+      if(fieldObj){
+        if(((fieldObj.value).replace(/^\s+|\s+$/g,'')).length == 0){
+          alert(fldLangVal[i] + ' cannot be empty.');
+          fieldObj.focus();
+          return false;
+        }
+        try{ if(fieldObj.name == 'Last Name'){ name = fieldObj.value; } }catch(e){}
+      }
+    }
+    if(!validateEmail7289282000000741190()){ return false; }
+    if(!privacyAlert7289282000000741190()){ return false; }
+
+    var urlparams = new URLSearchParams(window.location.search);
+    if(urlparams.has('service') && urlparams.get('service') === 'smarturl'){
+      var webform = document.getElementById('webform7289282000000741190');
+      var smarturlfield = document.createElement('input');
+      smarturlfield.setAttribute('type','hidden');
+      smarturlfield.setAttribute('value', urlparams.get('service'));
+      smarturlfield.setAttribute('name','service');
+      webform.appendChild(smarturlfield);
+    }
+
+    document.getElementById('formsubmit').setAttribute('disabled', true);
+    return true;
+  }
+
+  document.getElementById('webform7289282000000741190').addEventListener('submit', function(e) {
+    var ismandatory = checkMandatory7289282000000741190();
+    if (!ismandatory) {
+      e.preventDefault();
+      return;
+    }
+    if (typeof _wfa_track !== 'undefined' && _wfa_track.wfa_submit) { _wfa_track.wfa_submit(e); }
+    document.getElementById('formsubmit').setAttribute('disabled', true);
+
+    // Mirror submission to our API → Google Sheets backup (fire-and-forget)
+    var name    = (document.getElementById('Last_Name').value || '').trim();
+    var phone   = (document.getElementById('Mobile').value || '').trim();
+    var email   = (document.getElementById('Email').value || '').trim();
+    var message = (document.getElementById('Description').value || '').trim();
+    fetch('/api/contact-leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, phone: phone, email: email, message: message })
+    }).catch(function() { /* non-blocking — Zoho is primary */ });
+
+    // Let the form POST naturally to Zoho via the hidden iframe (no CORS issue).
+    // Show success banner shortly after — Zoho processes the lead server-side.
+    setTimeout(function() {
+      document.getElementById('webform7289282000000741190').style.display = 'none';
+      document.getElementById('successBanner').style.display = 'block';
+      document.getElementById('formsubmit').removeAttribute('disabled');
+    }, 1200);
+  });
+</script>
+
+<!-- Do not remove this --- Analytics Tracking code starts -->
+<script id="wf_anal" src="https://crm.zohopublic.com/crm/WebFormAnalyticsServeServlet?rid=d777be498853758fe4173e4a06221acb56cca044540bf2cf94352b886af3b1de3c3128ffb876fa7a99ca5867027ef535gid456c634c034e6d4aeda8986c88aa41d46d1f046cdc271750ab7edec576ecd900gid5e5b9056556af683ae8589af6a3143ab0fc6f881dbf46aeba413f21432912056gidc8246b30d74d5b8febf0e9fc873647a36d5b07fd2a656e737f115013adcb90ac&tw=7dd5d81e8a0dc9c9873939be16be0e5214f96a4ecfdecc7b743fc28107a46305"></script>
+<!-- Do not remove this --- Analytics Tracking code ends -->
+
+</body>
+</html>
