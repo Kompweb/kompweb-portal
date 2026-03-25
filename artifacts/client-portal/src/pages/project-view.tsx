@@ -4,10 +4,10 @@ import { useParams, Link, useLocation } from "wouter";
 import {
   useGetProject, useUploadProjectFile, ProjectStatus,
   useGetProjectTasks, useCreateProjectTask, useUpdateProjectTask, useDeleteProjectTask,
-  useUpdateProject,
+  useUpdateProject, useDeleteFile,
 } from "@workspace/api-client-react";
 import { format } from "date-fns";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   FileText, UploadCloud, Download, FileArchive, FileSearch,
   Calendar, User, Tag, Clock, ArrowLeft, Loader2, CheckCheck, AlertCircle,
@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 
 const IMAGE_EXTS = ["png","jpg","jpeg","gif","webp","avif","heic","bmp","tiff"];
-
 const URL_SPLIT = /(\bhttps?:\/\/[^\s<>"']+)/g;
 
 function linkifyText(text: string) {
@@ -28,7 +27,7 @@ function linkifyText(text: string) {
         href={part}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-blue-600 underline underline-offset-2 break-all hover:text-blue-800 transition-colors"
+        className="text-blue-500 underline underline-offset-2 break-all hover:text-blue-700 transition-colors"
         onClick={(e) => e.stopPropagation()}
       >
         {part}
@@ -38,24 +37,19 @@ function linkifyText(text: string) {
     )
   );
 }
+
 function isImageFile(name: string) {
   return IMAGE_EXTS.includes(name.split(".").pop()?.toLowerCase() ?? "");
 }
 
 function getFileIcon(name: string) {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
-  if (IMAGE_EXTS.includes(ext))
-    return { Icon: Image,     color: "text-sky-400" };
-  if (["mp4","mov","avi","mkv","webm"].includes(ext))
-    return { Icon: FileVideo, color: "text-violet-400" };
-  if (["mp3","wav","aac","flac","ogg"].includes(ext))
-    return { Icon: FileAudio, color: "text-pink-400" };
-  if (["zip","rar","tar","gz","7z"].includes(ext))
-    return { Icon: FileArchive, color: "text-amber-400" };
-  if (["pdf"].includes(ext))
-    return { Icon: FileText,  color: "text-red-400" };
-  if (["js","ts","tsx","jsx","html","css","json","py","php"].includes(ext))
-    return { Icon: FileCode,  color: "text-green-400" };
+  if (IMAGE_EXTS.includes(ext))      return { Icon: Image,     color: "text-sky-400" };
+  if (["mp4","mov","avi","mkv","webm"].includes(ext)) return { Icon: FileVideo, color: "text-violet-400" };
+  if (["mp3","wav","aac","flac","ogg"].includes(ext)) return { Icon: FileAudio, color: "text-pink-400" };
+  if (["zip","rar","tar","gz","7z"].includes(ext))    return { Icon: FileArchive, color: "text-amber-400" };
+  if (["pdf"].includes(ext))          return { Icon: FileText,  color: "text-red-400" };
+  if (["js","ts","tsx","jsx","html","css","json","py","php"].includes(ext)) return { Icon: FileCode, color: "text-green-400" };
   return { Icon: File, color: "text-white/30" };
 }
 
@@ -86,7 +80,6 @@ function ProjectStepper({ currentStatus }: { currentStatus: ProjectStatus }) {
 
   return (
     <div className="w-full">
-      {/* Track */}
       <div className="relative flex items-center justify-between">
         <div className="absolute left-0 right-0 top-3.5 h-px bg-white/10">
           <div
@@ -94,7 +87,6 @@ function ProjectStepper({ currentStatus }: { currentStatus: ProjectStatus }) {
             style={{ width: `${pct}%` }}
           />
         </div>
-
         {STATUS_STEPS.map((step, idx) => {
           const done    = idx < currentIndex;
           const current = idx === currentIndex;
@@ -138,6 +130,8 @@ export function ProjectView() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rightTab, setRightTab] = useState<"files" | "tasks">("files");
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editingTaskText, setEditingTaskText] = useState("");
   const [, setLocation] = useLocation();
   const [editingBrief, setEditingBrief] = useState(false);
   const [briefDraft, setBriefDraft] = useState("");
@@ -149,108 +143,72 @@ export function ProjectView() {
   const { data: project, isLoading, error } = useGetProject(projectId);
   const { data: tasks = [], isLoading: tasksLoading } = useGetProjectTasks(projectId);
 
+  /* ── File upload ── */
   const { mutate: uploadFile, isPending: isUploading } = useUploadProjectFile({
-    mutation: {
-      onSuccess: () => {
-        toast({ title: "File uploaded" });
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      },
-      onError: () => {
-        toast({ title: "Upload failed", variant: "destructive" });
-      },
+    onSuccess: () => {
+      toast({ title: "File uploaded" });
+      void queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
+      if (fileInputRef.current) fileInputRef.current.value = "";
     },
+    onError: () => toast({ title: "Upload failed", variant: "destructive" }),
   });
 
-  const { mutate: createTask, isPending: isCreatingTask } = useCreateProjectTask(projectId);
-  const { mutate: updateTask } = useUpdateProjectTask();
+  /* ── Tasks ── */
+  const { mutate: createTask, isPending: isCreatingTask } = useCreateProjectTask();
+  const { mutate: updateTask, isPending: isUpdatingTask } = useUpdateProjectTask();
   const { mutate: deleteTask } = useDeleteProjectTask();
 
+  /* ── Brief / title ── */
   const { mutate: updateProject, isPending: isSavingBrief } = useUpdateProject({
-    mutation: {
-      onSuccess: () => {
-        toast({ title: "Brief updated" });
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
-        setEditingBrief(false);
-      },
-      onError: () => toast({ title: "Failed to save", variant: "destructive" }),
+    onSuccess: () => {
+      toast({ title: "Brief updated" });
+      void queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
+      setEditingBrief(false);
     },
+    onError: () => toast({ title: "Failed to save", variant: "destructive" }),
   });
 
   const { mutate: saveTitle, isPending: isSavingTitle } = useUpdateProject({
-    mutation: {
-      onSuccess: () => {
-        toast({ title: "Title updated" });
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
-        setEditingTitle(false);
-      },
-      onError: () => toast({ title: "Failed to save title", variant: "destructive" }),
+    onSuccess: () => {
+      toast({ title: "Title updated" });
+      void queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
+      setEditingTitle(false);
     },
+    onError: () => toast({ title: "Failed to save title", variant: "destructive" }),
   });
-
-  const handleEditBrief = () => {
-    setBriefDraft(project?.description ?? "");
-    setEditingBrief(true);
-  };
-
-  const handleSaveBrief = () => {
-    updateProject({ id: projectId, data: { description: briefDraft } });
-  };
-
-  const handleEditTitle = () => {
-    setTitleDraft(project?.title ?? "");
-    setEditingTitle(true);
-  };
-
-  const handleSaveTitle = () => {
-    const trimmed = titleDraft.trim();
-    if (!trimmed) return;
-    saveTitle({ id: projectId, data: { title: trimmed } });
-  };
-
-  type BriefTodo = { id: string; text: string; done: boolean };
 
   const { mutate: saveTodos } = useUpdateProject({
-    mutation: {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] }),
-    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["projects", projectId] }),
   });
 
-  const todos: BriefTodo[] = (project as any)?.briefTodos ?? [];
-
-  const persistTodos = (next: BriefTodo[]) => {
-    saveTodos({ id: projectId, data: { briefTodos: next } as any });
-  };
-
-  const handleToggleTodo = (id: string) => {
-    const next = todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
-    persistTodos(next);
-  };
-
-  const handleDeleteTodo = (id: string) => {
-    persistTodos(todos.filter((t) => t.id !== id));
-  };
-
-  const handleAddTodo = () => {
-    const text = newTodoText.trim();
-    if (!text) return;
-    const next = [...todos, { id: crypto.randomUUID(), text, done: false }];
-    persistTodos(next);
-    setNewTodoText("");
-  };
-
-  const { mutate: deleteFile, isPending: isDeletingFile } = useMutation({
-    mutationFn: async (fileId: number) => {
-      const res = await fetch(`/api/files/${fileId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
-    },
+  /* ── File delete ── */
+  const { mutate: deleteFile, isPending: isDeletingFile } = useDeleteFile({
     onSuccess: () => {
       toast({ title: "File deleted" });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
+      void queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
       setConfirmDeleteFileId(null);
     },
     onError: () => toast({ title: "Failed to delete file", variant: "destructive" }),
   });
+
+  type BriefTodo = { id: string; text: string; done: boolean };
+  const todos: BriefTodo[] = (project as any)?.briefTodos ?? [];
+
+  const persistTodos = (next: BriefTodo[]) =>
+    saveTodos({ id: projectId, body: { briefTodos: next } as any });
+
+  const handleToggleTodo = (id: string) =>
+    persistTodos(todos.map(t => t.id === id ? { ...t, done: !t.done } : t));
+
+  const handleDeleteTodo = (id: string) =>
+    persistTodos(todos.filter(t => t.id !== id));
+
+  const handleAddTodo = () => {
+    const text = newTodoText.trim();
+    if (!text) return;
+    persistTodos([...todos, { id: crypto.randomUUID(), text, done: false }]);
+    setNewTodoText("");
+  };
 
   /* ── Ownership guard ── */
   useEffect(() => {
@@ -262,36 +220,61 @@ export function ProjectView() {
     }
   }, [project, setLocation]);
 
+  /* ── Handlers ── */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && project) {
-      uploadFile({ id: projectId, data: { file, uploadedBy: project.clientName } });
+      uploadFile({ projectId, file, uploadedBy: project.clientName });
     }
   };
 
   const handleAddTask = () => {
     const title = newTaskTitle.trim();
     if (!title) return;
-    createTask({ title }, {
-      onSuccess: () => {
-        setNewTaskTitle("");
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
-      },
+    createTask({ projectId, title }, {
+      onSuccess: () => setNewTaskTitle(""),
       onError: () => toast({ title: "Failed to add task", variant: "destructive" }),
     });
   };
 
-  const handleToggleTask = (taskId: number, completed: boolean) => {
-    updateTask({ taskId, completed: !completed }, {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] }),
+  const handleToggleTask = (taskId: number, completed: boolean) =>
+    updateTask({ taskId, completed: !completed, projectId });
+
+  const handleDeleteTask = (taskId: number) =>
+    deleteTask({ taskId, projectId }, {
+      onError: () => toast({ title: "Failed to delete task", variant: "destructive" }),
+    });
+
+  const startEditTask = (taskId: number, currentTitle: string) => {
+    setEditingTaskId(taskId);
+    setEditingTaskText(currentTitle);
+  };
+
+  const saveEditTask = (taskId: number) => {
+    const title = editingTaskText.trim();
+    if (!title) return;
+    updateTask({ taskId, title, projectId }, {
+      onSuccess: () => setEditingTaskId(null),
     });
   };
 
-  const handleDeleteTask = (taskId: number) => {
-    deleteTask({ taskId }, {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] }),
-      onError: () => toast({ title: "Failed to delete task", variant: "destructive" }),
-    });
+  const handleEditBrief = () => {
+    setBriefDraft(project?.description ?? "");
+    setEditingBrief(true);
+  };
+
+  const handleSaveBrief = () =>
+    updateProject({ id: projectId, body: { description: briefDraft } });
+
+  const handleEditTitle = () => {
+    setTitleDraft(project?.title ?? "");
+    setEditingTitle(true);
+  };
+
+  const handleSaveTitle = () => {
+    const trimmed = titleDraft.trim();
+    if (!trimmed) return;
+    saveTitle({ id: projectId, body: { title: trimmed } });
   };
 
   /* ── Loading ── */
@@ -320,6 +303,8 @@ export function ProjectView() {
   }
 
   const typeLabel = project.projectType.split("_").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  const completedCount = tasks.filter(t => t.completed).length;
+  const progressPct = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
   return (
     <div className="flex-1 bg-[#0a0a0a] py-8">
@@ -332,8 +317,7 @@ export function ProjectView() {
 
         {/* ── Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div>
-            {/* Inline-editable title */}
+          <div className="flex-1 min-w-0">
             {editingTitle ? (
               <div className="flex items-center gap-2 mb-2">
                 <input
@@ -346,11 +330,7 @@ export function ProjectView() {
                   }}
                   className="text-xl font-bold text-white tracking-tight bg-transparent border-b border-white/30 focus:border-white/60 outline-none w-full max-w-sm"
                 />
-                <button
-                  onClick={() => setEditingTitle(false)}
-                  disabled={isSavingTitle}
-                  className="text-white/30 hover:text-white/60 transition-colors"
-                >
+                <button onClick={() => setEditingTitle(false)} disabled={isSavingTitle} className="text-white/30 hover:text-white/60 transition-colors">
                   <XIcon size={14} />
                 </button>
                 <button
@@ -362,12 +342,8 @@ export function ProjectView() {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={handleEditTitle}
-                className="group flex items-center gap-2 mb-2 text-left"
-                title="Click to edit title"
-              >
-                <h1 className="text-xl font-bold text-white tracking-tight">{project.title}</h1>
+              <button onClick={handleEditTitle} className="group flex items-center gap-2 mb-2 text-left" title="Click to edit title">
+                <h1 className="text-xl font-bold text-white tracking-tight truncate">{project.title}</h1>
                 <Pencil size={12} className="text-white/0 group-hover:text-white/40 transition-colors shrink-0 mt-0.5" />
               </button>
             )}
@@ -413,10 +389,11 @@ export function ProjectView() {
         {/* ── Main grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Project Brief */}
+          {/* ── Project Brief ── */}
           <div className="lg:col-span-2">
-            <div className="p-5 rounded-2xl bg-white h-full flex flex-col">
-              <div className="flex items-center justify-between mb-3">
+            <div className="rounded-2xl bg-white h-full flex flex-col overflow-hidden">
+              {/* Brief header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
                 <p className="text-black/30 text-[10px] font-semibold uppercase tracking-widest flex items-center gap-1.5">
                   <FileText size={10} /> Project Brief
                 </p>
@@ -431,7 +408,7 @@ export function ProjectView() {
               </div>
 
               {editingBrief ? (
-                <div className="flex flex-col gap-3 flex-1">
+                <div className="flex flex-col gap-3 flex-1 p-5">
                   <textarea
                     value={briefDraft}
                     onChange={(e) => setBriefDraft(e.target.value)}
@@ -458,64 +435,71 @@ export function ProjectView() {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col flex-1 gap-4">
+                <div className="flex flex-col flex-1 gap-0">
                   {/* Description */}
-                  <p className="text-black/70 text-xs leading-relaxed whitespace-pre-wrap">{linkifyText(project.description)}</p>
+                  <div className="px-5 py-4">
+                    <p className="text-black/70 text-xs leading-relaxed whitespace-pre-wrap">{linkifyText(project.description)}</p>
+                  </div>
 
                   {/* ── To-Do Checklist ── */}
-                  <div className="pt-3 border-t border-black/[0.06]">
-                    <p className="text-black/25 text-[10px] font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <ListChecks size={10} /> To-Do
-                    </p>
+                  <div className="border-t border-black/[0.06]">
+                    <div className="px-5 py-3 flex items-center justify-between">
+                      <p className="text-black/25 text-[10px] font-semibold uppercase tracking-widest flex items-center gap-1.5">
+                        <ListChecks size={10} /> Notes / To-Do
+                      </p>
+                      {todos.length > 0 && (
+                        <span className="text-black/25 text-[10px]">
+                          {todos.filter(t => t.done).length}/{todos.length} done
+                        </span>
+                      )}
+                    </div>
 
-                    {todos.length === 0 && (
-                      <p className="text-black/25 text-xs italic mb-2">No tasks yet — add one below.</p>
-                    )}
+                    <div className="px-5 pb-2">
+                      {todos.length === 0 && (
+                        <p className="text-black/25 text-xs italic mb-2">No notes yet — add one below.</p>
+                      )}
+                      <ul className="space-y-1.5 mb-3">
+                        {todos.map((todo) => (
+                          <li key={todo.id} className="group flex items-start gap-2.5">
+                            <button
+                              onClick={() => handleToggleTodo(todo.id)}
+                              className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                                todo.done ? "bg-black border-black" : "border-black/20 hover:border-black/50 bg-white"
+                              }`}
+                            >
+                              {todo.done && <Check size={9} className="text-white" />}
+                            </button>
+                            <span className={`flex-1 text-xs leading-relaxed transition-all ${
+                              todo.done ? "line-through text-black/25" : "text-black/70"
+                            }`}>
+                              {todo.text}
+                            </span>
+                            <button
+                              onClick={() => handleDeleteTodo(todo.id)}
+                              className="opacity-0 group-hover:opacity-100 text-black/20 hover:text-red-400 transition-all flex-shrink-0 mt-0.5 p-0.5 rounded"
+                            >
+                              <XIcon size={10} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
 
-                    <ul className="space-y-1 mb-3">
-                      {todos.map((todo) => (
-                        <li key={todo.id} className="group flex items-start gap-2">
-                          <button
-                            onClick={() => handleToggleTodo(todo.id)}
-                            className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                              todo.done
-                                ? "bg-black border-black"
-                                : "border-black/20 hover:border-black/50 bg-white"
-                            }`}
-                          >
-                            {todo.done && <Check size={10} className="text-white" />}
-                          </button>
-                          <span className={`flex-1 text-xs leading-relaxed transition-all ${
-                            todo.done ? "line-through text-black/25" : "text-black/70"
-                          }`}>
-                            {todo.text}
-                          </span>
-                          <button
-                            onClick={() => handleDeleteTodo(todo.id)}
-                            className="opacity-0 group-hover:opacity-100 text-black/20 hover:text-red-400 transition-all flex-shrink-0 mt-0.5"
-                          >
-                            <XIcon size={11} />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {/* Add new todo */}
-                    <div className="flex gap-1.5">
-                      <input
-                        value={newTodoText}
-                        onChange={(e) => setNewTodoText(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") handleAddTodo(); }}
-                        placeholder="Add a task…"
-                        className="flex-1 rounded-lg border border-black/10 bg-black/[0.02] px-2.5 py-1.5 text-xs text-black/70 placeholder:text-black/25 focus:outline-none focus:border-black/25 transition-colors"
-                      />
-                      <button
-                        onClick={handleAddTodo}
-                        disabled={!newTodoText.trim()}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-black text-white text-xs font-semibold hover:bg-black/80 disabled:opacity-30 transition-all"
-                      >
-                        <Plus size={11} /> Add
-                      </button>
+                      <div className="flex gap-1.5 pb-2">
+                        <input
+                          value={newTodoText}
+                          onChange={(e) => setNewTodoText(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleAddTodo(); }}
+                          placeholder="Add a note…"
+                          className="flex-1 rounded-lg border border-black/10 bg-black/[0.02] px-2.5 py-1.5 text-xs text-black/70 placeholder:text-black/25 focus:outline-none focus:border-black/25 transition-colors"
+                        />
+                        <button
+                          onClick={handleAddTodo}
+                          disabled={!newTodoText.trim()}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-black text-white text-xs font-semibold hover:bg-black/80 disabled:opacity-30 transition-all"
+                        >
+                          <Plus size={11} /> Add
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -523,7 +507,7 @@ export function ProjectView() {
             </div>
           </div>
 
-          {/* Right panel — Files / Tasks tabs */}
+          {/* ── Right panel — Files / Tasks ── */}
           <div>
             <div className="rounded-2xl bg-white overflow-hidden">
 
@@ -534,14 +518,19 @@ export function ProjectView() {
                     key={tab}
                     onClick={() => setRightTab(tab)}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-[10px] font-semibold uppercase tracking-widest transition-colors
-                      ${rightTab === tab
-                        ? "text-black border-b-2 border-black"
-                        : "text-black/30 hover:text-black/50"}`}
+                      ${rightTab === tab ? "text-black border-b-2 border-black" : "text-black/30 hover:text-black/50"}`}
                   >
-                    {tab === "files"
-                      ? <><FileArchive size={10} /> Files <span className="ml-0.5 bg-black/8 text-black/40 px-1.5 py-0.5 rounded-full text-[9px]">{project.files.length}</span></>
-                      : <><ListChecks size={10} /> Tasks <span className="ml-0.5 bg-black/8 text-black/40 px-1.5 py-0.5 rounded-full text-[9px]">{tasks.length}</span></>
-                    }
+                    {tab === "files" ? (
+                      <>
+                        <FileArchive size={10} /> Files
+                        <span className="ml-0.5 bg-black/8 text-black/40 px-1.5 py-0.5 rounded-full text-[9px]">{project.files.length}</span>
+                      </>
+                    ) : (
+                      <>
+                        <ListChecks size={10} /> Tasks
+                        <span className="ml-0.5 bg-black/8 text-black/40 px-1.5 py-0.5 rounded-full text-[9px]">{tasks.length}</span>
+                      </>
+                    )}
                   </button>
                 ))}
               </div>
@@ -562,10 +551,10 @@ export function ProjectView() {
                     <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
                   </div>
 
-                  <div className="divide-y divide-black/[0.05] max-h-[360px] overflow-y-auto">
+                  <div className="divide-y divide-black/[0.05] max-h-[400px] overflow-y-auto">
                     {project.files.length === 0 ? (
                       <div className="p-8 flex flex-col items-center gap-2">
-                        <FileSearch size={20} className="text-black/15" />
+                        <FileSearch size={22} className="text-black/15" />
                         <p className="text-black/25 text-xs">No files uploaded yet.</p>
                       </div>
                     ) : (
@@ -594,7 +583,6 @@ export function ProjectView() {
                               <p className="text-black/35 text-[10px]">{format(new Date(file.createdAt), "MMM d")} · {file.uploadedBy}</p>
                             </div>
 
-                            {/* Actions */}
                             {isConfirming ? (
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <button
@@ -646,7 +634,7 @@ export function ProjectView() {
                       onChange={e => setNewTaskTitle(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && handleAddTask()}
                       placeholder="Add a task…"
-                      className="flex-1 h-9 px-3 rounded-xl border border-black/12 text-xs text-black/70 placeholder:text-black/25 focus:outline-none focus:border-black/25 bg-black/[0.02] transition-colors"
+                      className="flex-1 h-9 px-3 rounded-xl border border-black/12 text-xs text-black/70 placeholder:text-black/25 focus:outline-none focus:border-black/30 bg-black/[0.02] transition-colors"
                     />
                     <button
                       onClick={handleAddTask}
@@ -658,40 +646,85 @@ export function ProjectView() {
                   </div>
 
                   {/* Task list */}
-                  <div className="divide-y divide-black/[0.05] max-h-[360px] overflow-y-auto">
+                  <div className="divide-y divide-black/[0.05] max-h-[400px] overflow-y-auto">
                     {tasksLoading ? (
                       <div className="p-8 flex items-center justify-center">
                         <Loader2 size={16} className="animate-spin text-black/20" />
                       </div>
                     ) : tasks.length === 0 ? (
                       <div className="p-8 flex flex-col items-center gap-2">
-                        <ListChecks size={20} className="text-black/15" />
+                        <ListChecks size={22} className="text-black/15" />
                         <p className="text-black/25 text-xs">No tasks yet.</p>
                       </div>
                     ) : (
                       tasks.map(task => (
-                        <div key={task.id} className="px-4 py-3 flex items-center gap-3 group hover:bg-black/[0.02] transition-colors">
-                          {/* Checkbox */}
-                          <button
-                            onClick={() => handleToggleTask(task.id, task.completed)}
-                            className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all
-                              ${task.completed
-                                ? "bg-black border-black text-white"
-                                : "border-black/20 hover:border-black/40"}`}
-                          >
-                            {task.completed && <Check size={10} />}
-                          </button>
-                          {/* Title */}
-                          <span className={`flex-1 text-xs transition-colors ${task.completed ? "line-through text-black/25" : "text-black/70"}`}>
-                            {task.title}
-                          </span>
-                          {/* Delete */}
-                          <button
-                            onClick={() => handleDeleteTask(task.id)}
-                            className="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-black/20 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
-                          >
-                            <Trash2 size={11} />
-                          </button>
+                        <div key={task.id} className="px-4 py-3 group transition-colors hover:bg-black/[0.02]">
+                          {editingTaskId === task.id ? (
+                            /* ── Inline edit mode ── */
+                            <div className="flex items-center gap-2">
+                              <input
+                                autoFocus
+                                value={editingTaskText}
+                                onChange={e => setEditingTaskText(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === "Enter") saveEditTask(task.id);
+                                  if (e.key === "Escape") setEditingTaskId(null);
+                                }}
+                                className="flex-1 px-2 py-1 text-xs text-black/80 bg-black/[0.03] border border-black/15 rounded-lg focus:outline-none focus:border-black/30 transition-colors"
+                              />
+                              <button
+                                onClick={() => setEditingTaskId(null)}
+                                className="w-6 h-6 flex items-center justify-center text-black/25 hover:text-black/50 transition-colors"
+                              >
+                                <XIcon size={12} />
+                              </button>
+                              <button
+                                onClick={() => saveEditTask(task.id)}
+                                disabled={isUpdatingTask || !editingTaskText.trim()}
+                                className="w-6 h-6 flex items-center justify-center text-black/50 hover:text-black disabled:opacity-30 transition-colors"
+                              >
+                                {isUpdatingTask ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                              </button>
+                            </div>
+                          ) : (
+                            /* ── Normal mode ── */
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => handleToggleTask(task.id, task.completed)}
+                                className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all
+                                  ${task.completed ? "bg-black border-black text-white" : "border-black/20 hover:border-black/50"}`}
+                              >
+                                {task.completed && <Check size={10} />}
+                              </button>
+                              <span
+                                className={`flex-1 text-xs leading-relaxed cursor-pointer transition-colors ${
+                                  task.completed ? "line-through text-black/25" : "text-black/70"
+                                }`}
+                                onDoubleClick={() => !task.completed && startEditTask(task.id, task.title)}
+                                title={task.completed ? "" : "Double-click to edit"}
+                              >
+                                {task.title}
+                              </span>
+                              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                                {!task.completed && (
+                                  <button
+                                    onClick={() => startEditTask(task.id, task.title)}
+                                    className="w-6 h-6 flex items-center justify-center rounded-lg text-black/20 hover:text-black/60 hover:bg-black/8 transition-all"
+                                    title="Edit task"
+                                  >
+                                    <Pencil size={11} />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteTask(task.id)}
+                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-black/20 hover:text-red-500 hover:bg-red-50 transition-all"
+                                  title="Delete task"
+                                >
+                                  <Trash2 size={11} />
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))
                     )}
@@ -700,14 +733,14 @@ export function ProjectView() {
                   {/* Progress bar */}
                   {tasks.length > 0 && (
                     <div className="px-4 py-3 border-t border-black/[0.06]">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <p className="text-black/30 text-[10px]">{tasks.filter(t => t.completed).length} of {tasks.length} done</p>
-                        <p className="text-black/30 text-[10px]">{Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100)}%</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-black/30 text-[10px]">{completedCount} of {tasks.length} done</p>
+                        <p className="text-black/40 text-[10px] font-semibold">{progressPct}%</p>
                       </div>
-                      <div className="w-full h-1 rounded-full bg-black/[0.06]">
+                      <div className="w-full h-1.5 rounded-full bg-black/[0.06]">
                         <div
                           className="h-full rounded-full bg-black transition-all duration-500"
-                          style={{ width: `${(tasks.filter(t => t.completed).length / tasks.length) * 100}%` }}
+                          style={{ width: `${progressPct}%` }}
                         />
                       </div>
                     </div>
