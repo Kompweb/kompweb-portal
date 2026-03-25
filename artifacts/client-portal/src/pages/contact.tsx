@@ -31,16 +31,10 @@ export function Contact() {
             {/* Info tiles */}
             {[
               {
-                icon: <Mail size={16} className="text-white/60" />,
-                label: "Email",
-                value: "hello@kompweb.com",
-                href: "mailto:hello@kompweb.com",
-              },
-              {
                 icon: <Phone size={16} className="text-white/60" />,
-                label: "Phone / WhatsApp",
-                value: "+1 (555) 000-0000",
-                href: "tel:+15550000000",
+                label: "Phone",
+                value: "+1 (844) 861-0845",
+                href: "tel:+18448610845",
               },
               {
                 icon: <MapPin size={16} className="text-white/60" />,
