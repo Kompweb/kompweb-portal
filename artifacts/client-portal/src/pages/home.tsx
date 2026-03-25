@@ -152,7 +152,7 @@ export function Home() {
               </Link>
 
               {/* Auth area — changes based on session */}
-              <div className="flex items-center gap-2 mt-[90px] mr-[200px] lg:mt-[100px] lg:mr-[250px]">
+              <div className="flex items-center gap-2 mt-[90px] mr-0 lg:mt-[100px] lg:mr-[120px]">
                 {session ? (
                   <>
                     {session.email === "admin@kompweb.com" ? (
