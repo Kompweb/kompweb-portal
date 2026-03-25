@@ -19,6 +19,8 @@ const integrations = [
   { name: "Twilio",       icon: "/images/twilio-logo.png",                         color: "#F22F46" },
   { name: "HubSpot",      icon: "https://cdn.simpleicons.org/hubspot/FF7A59",       color: "#FF7A59" },
   { name: "Semrush",      icon: "https://cdn.simpleicons.org/semrush/FF642D",       color: "#FF642D" },
+  { name: "Wix",          icon: "/images/wix-logo.png",                            color: "#F7B731" },
+  { name: "Shippify",     icon: "https://logo.clearbit.com/shippify.com",           color: "#00C65E" },
 ];
 
 // ─── Core Tech Stack ───────────────────────────────────────────────────────────
