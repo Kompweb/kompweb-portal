@@ -140,6 +140,7 @@ export function Footer({ scrollToContact = false }: FooterProps) {
             <p className="text-white/25 text-xs font-semibold uppercase tracking-widest mb-0.5">Company</p>
             <Link href="/about" className="text-white/45 text-sm md:text-xs hover:text-white/70 transition-colors">About</Link>
             <Link href="/blog" className="text-white/45 text-sm md:text-xs hover:text-white/70 transition-colors">Blog</Link>
+            <Link href="/contact" className="text-white/45 text-sm md:text-xs hover:text-white/70 transition-colors">Contact Us</Link>
           </div>
 
           <div className="flex flex-col gap-2">

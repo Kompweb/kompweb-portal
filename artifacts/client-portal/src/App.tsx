@@ -14,6 +14,7 @@ import { PrivacyPolicy } from "@/pages/privacy-policy";
 import { TermsOfService } from "@/pages/terms-of-service";
 import { About } from "@/pages/about";
 import { Blog } from "@/pages/blog";
+import { Contact } from "@/pages/contact";
 import { ServicePage } from "@/pages/service-page";
 import { ContactModalProvider } from "@/context/contact-modal-context";
 import { ContactModal } from "@/components/contact-modal";
@@ -53,6 +54,7 @@ function Router() {
             <Route path="/terms-of-service" component={TermsOfService} />
             <Route path="/about" component={About} />
             <Route path="/blog" component={Blog} />
+            <Route path="/contact" component={Contact} />
             <Route path="/services/:slug" component={ServicePage} />
             <Route component={NotFound} />
           </Switch>
