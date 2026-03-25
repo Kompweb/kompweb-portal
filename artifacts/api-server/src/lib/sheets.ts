@@ -68,7 +68,7 @@ export async function appendContactLead(lead: {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!A:E",
+    range: "'Get In Touch'!A:E",
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [[timestamp, lead.name, lead.phone, lead.email, lead.message]],
