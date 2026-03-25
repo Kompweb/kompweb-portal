@@ -1,6 +1,9 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import path from "node:path";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -30,5 +33,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction) {
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+  const clientDist = path.resolve(currentDir, "..", "..", "client-portal", "dist", "public");
+  if (existsSync(clientDist)) {
+    app.use(express.static(clientDist));
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(clientDist, "index.html"));
+    });
+    logger.info({ clientDist }, "Serving static frontend files");
+  } else {
+    logger.warn({ clientDist }, "Static frontend dist not found — serving API only");
+  }
+}
 
 export default app;
