@@ -12,7 +12,7 @@ version = "1.0.0"
 [[services]]
 name = "web"
 paths = [ "/" ]
-localPort = 25516
+localPort = 3000
 
 [services.development]
 run = "pnpm --filter @workspace/client-portal run dev"
@@ -22,5 +22,5 @@ build = [ "sh", "-c", "BASE_PATH=/ pnpm --filter @workspace/client-portal run bu
 run = [ "node", "artifacts/api-server/dist/index.mjs" ]
 
 [services.env]
-PORT = "25516"
+PORT = "3000"
 BASE_PATH = "/"
