@@ -20,7 +20,6 @@ const integrations = [
   { name: "HubSpot",      icon: "https://cdn.simpleicons.org/hubspot/FF7A59",       color: "#FF7A59" },
   { name: "Semrush",      icon: "https://cdn.simpleicons.org/semrush/FF642D",       color: "#FF642D" },
   { name: "Wix",          icon: "/images/wix-logo.png",                            color: "#F7B731" },
-  { name: "Shippify",     icon: "https://logo.clearbit.com/shippify.com",           color: "#00C65E" },
   { name: "Shopify",      icon: "/images/shopify-logo.png",                         color: "#96BF48" },
 ];
 
