@@ -1,4 +1,5 @@
 import { ArrowRight, Clock, Tag } from "lucide-react";
+import { Link } from "wouter";
 
 const POSTS = [
   {
@@ -86,7 +87,7 @@ export function Blog() {
         </div>
 
         {/* ── Featured post ── */}
-        <div className={`relative rounded-2xl border border-white/[0.08] overflow-hidden mb-6 bg-gradient-to-br ${POSTS[0].accent} bg-white/[0.02] group cursor-pointer`}>
+        <Link href={`/blog/${POSTS[0].slug}`} className={`relative rounded-2xl border border-white/[0.08] overflow-hidden mb-6 bg-gradient-to-br ${POSTS[0].accent} bg-white/[0.02] group cursor-pointer block hover:border-white/[0.18] transition-all duration-200`}>
           <div className="p-6 md:p-8">
             <div className="flex flex-wrap items-center gap-3 mb-4">
               <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-semibold uppercase tracking-wide ${POSTS[0].tagColor}`}>
@@ -105,14 +106,15 @@ export function Blog() {
               Read article <ArrowRight size={13} />
             </span>
           </div>
-        </div>
+        </Link>
 
         {/* ── Grid of remaining posts ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {POSTS.slice(1).map(post => (
-            <div
+            <Link
               key={post.slug}
-              className="relative rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden group cursor-pointer hover:border-white/[0.15] transition-all duration-200"
+              href={`/blog/${post.slug}`}
+              className="relative rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden group cursor-pointer hover:border-white/[0.18] transition-all duration-200 block"
             >
               {/* Accent gradient strip */}
               <div className={`h-[2px] w-full bg-gradient-to-r ${post.accent}`} />
@@ -135,10 +137,12 @@ export function Blog() {
                   <span className="text-white/25 text-xs flex items-center gap-1">
                     <Clock size={9} /> {post.readTime}
                   </span>
-                  <span className="text-white/25 text-xs">{post.date}</span>
+                  <span className="inline-flex items-center gap-1 text-white/25 text-xs group-hover:text-white/50 transition-colors">
+                    {post.date} <ArrowRight size={10} />
+                  </span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
