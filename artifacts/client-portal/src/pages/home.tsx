@@ -152,7 +152,7 @@ export function Home() {
               </Link>
 
               {/* Auth area — changes based on session */}
-              <div className="flex items-center gap-2 mt-[100px] mr-[100px]">
+              <div className="flex items-center gap-2 mt-[90px] mr-[200px] lg:mt-[100px] lg:mr-[250px]">
                 {session ? (
                   <>
                     {session.email === "admin@kompweb.com" ? (
@@ -183,9 +183,9 @@ export function Home() {
                 ) : (
                   <button
                     onClick={() => setLoginOpen(true)}
-                    className="flex items-center gap-2 bg-white text-black hover:bg-white/90 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-150 flex-shrink-0 shadow-[0_0_24px_rgba(255,255,255,0.18)] hover:shadow-[0_0_36px_rgba(255,255,255,0.28)] hover:scale-[1.03] active:scale-[0.97]"
+                    className="flex items-center gap-3 bg-white text-black hover:bg-white/90 rounded-2xl px-7 py-3.5 text-base font-bold transition-all duration-150 flex-shrink-0 shadow-[0_0_28px_rgba(255,255,255,0.20)] hover:shadow-[0_0_44px_rgba(255,255,255,0.32)] hover:scale-[1.03] active:scale-[0.97]"
                   >
-                    <LogIn size={14} />
+                    <LogIn size={18} />
                     Client Login
                   </button>
                 )}
