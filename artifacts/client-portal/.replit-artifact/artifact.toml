@@ -18,13 +18,8 @@ localPort = 25516
 run = "pnpm --filter @workspace/client-portal run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/client-portal", "run", "build" ]
-publicDir = "artifacts/client-portal/dist/public"
-serve = "static"
-
-[[services.production.rewrites]]
-from = "/*"
-to = "/index.html"
+build = [ "sh", "-c", "BASE_PATH=/ pnpm --filter @workspace/client-portal run build && pnpm --filter @workspace/api-server run build" ]
+run = [ "node", "artifacts/api-server/dist/index.mjs" ]
 
 [services.env]
 PORT = "25516"
