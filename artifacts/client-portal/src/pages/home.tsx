@@ -183,10 +183,10 @@ export function Home() {
                 ) : (
                   <button
                     onClick={() => setLoginOpen(true)}
-                    className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/50 hover:text-white rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-150 flex-shrink-0"
+                    className="flex items-center gap-2 bg-white text-black hover:bg-white/90 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-150 flex-shrink-0 shadow-[0_0_24px_rgba(255,255,255,0.18)] hover:shadow-[0_0_36px_rgba(255,255,255,0.28)] hover:scale-[1.03] active:scale-[0.97]"
                   >
-                    <LogIn size={12} />
-                    Login
+                    <LogIn size={14} />
+                    Client Login
                   </button>
                 )}
               </div>
@@ -196,26 +196,11 @@ export function Home() {
               AI-first.<br />
               <span className="text-white/40">Built to perform.</span>
             </h1>
-            <p className="text-base md:text-sm max-w-md leading-relaxed font-medium mb-8" style={{ color: "rgba(255,255,255,0.85)", textShadow: "0 0 40px rgba(167,139,250,0.25)" }}>
+            <p className="text-base md:text-sm max-w-md leading-relaxed font-medium" style={{ color: "rgba(255,255,255,0.85)", textShadow: "0 0 40px rgba(167,139,250,0.25)" }}>
               From AI agents and automation to full-stack web —{" "}
               <span className="text-white font-semibold">we build intelligent systems</span>{" "}
               that work for your business 24/7.
             </p>
-
-            {/* ── Big Client Login CTA ── */}
-            {!session && (
-              <div className="flex flex-col items-start gap-2">
-                <button
-                  onClick={() => setLoginOpen(true)}
-                  className="group relative flex items-center gap-3 bg-white text-black font-bold text-lg px-8 py-4 rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_60px_rgba(255,255,255,0.25)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
-                >
-                  <LogIn size={20} />
-                  Client Login
-                  <ArrowRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform duration-200" />
-                </button>
-                <p className="text-white/30 text-xs font-medium pl-1">Already a client? Access your project portal →</p>
-              </div>
-            )}
           </div>
 
           {/* OpenClaw AI Badge + Integrations + Tech */}
