@@ -33,15 +33,13 @@ export function SubmitRequest() {
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
 
   const { mutate: createProject, isPending } = useCreateProject({
-    mutation: {
-      onSuccess: (data) => {
-        toast({ title: "Request Submitted!", description: "We've received your project request." });
-        setLocation(`/track/${data.id}`);
-      },
-      onError: () => {
-        toast({ variant: "destructive", title: "Error", description: "Failed to submit request. Please try again." });
-      }
-    }
+    onSuccess: (data) => {
+      toast({ title: "Request Submitted!", description: "We've received your project request." });
+      setLocation(`/track/${data.id}`);
+    },
+    onError: () => {
+      toast({ variant: "destructive", title: "Error", description: "Failed to submit request. Please try again." });
+    },
   });
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormValues>({
@@ -61,7 +59,7 @@ export function SubmitRequest() {
   }, [setValue]);
 
   const onSubmit = (data: FormValues) => {
-    createProject({ data });
+    createProject(data);
   };
 
   return (
