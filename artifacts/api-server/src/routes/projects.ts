@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { eq, sql } from "drizzle-orm";
 import { db, projectsTable, projectFilesTable, projectTasksTable } from "@workspace/db";
 import {
@@ -16,6 +16,26 @@ import { uploadFileToDrive, downloadFileFromDrive, deleteFileFromDrive } from ".
 
 const router: IRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+
+/* ── Admin auth ── */
+const ADMIN_KEY = process.env.ADMIN_PASSWORD ?? "kompweb2024";
+
+function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const key = req.headers["x-admin-key"];
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+}
+
+/* POST /admin/verify — check password, return ok */
+router.post("/admin/verify", (req: Request, res: Response) => {
+  const { password } = req.body as { password?: string };
+  if (password && password === ADMIN_KEY) {
+    return res.json({ ok: true });
+  }
+  return res.status(401).json({ error: "Invalid password" });
+});
 
 function formatProject(p: typeof projectsTable.$inferSelect) {
   let briefTodos: { id: string; text: string; done: boolean }[] = [];
@@ -118,8 +138,15 @@ router.patch("/projects/:id", async (req, res) => {
     const updateData: Partial<typeof projectsTable.$inferInsert> = {
       updatedAt: new Date(),
     };
-    if (body.status !== undefined) updateData.status = body.status;
-    if (body.adminNotes !== undefined) updateData.adminNotes = body.adminNotes ?? undefined;
+    const isAdmin = req.headers["x-admin-key"] === ADMIN_KEY;
+    if (body.status !== undefined) {
+      if (!isAdmin) return res.status(403).json({ error: "Admin only" });
+      updateData.status = body.status;
+    }
+    if (body.adminNotes !== undefined) {
+      if (!isAdmin) return res.status(403).json({ error: "Admin only" });
+      updateData.adminNotes = body.adminNotes ?? undefined;
+    }
     if (body.deadline !== undefined) updateData.deadline = body.deadline ?? undefined;
     if (body.title !== undefined) updateData.title = body.title;
     if (body.description !== undefined) updateData.description = body.description;
@@ -308,7 +335,7 @@ router.delete("/tasks/:taskId", async (req, res) => {
   }
 });
 
-router.get("/admin/stats", async (req, res) => {
+router.get("/admin/stats", requireAdmin, async (req, res) => {
   try {
     const allProjects = await db.select().from(projectsTable).orderBy(sql`${projectsTable.createdAt} DESC`);
     const byStatus: Record<string, number> = {};

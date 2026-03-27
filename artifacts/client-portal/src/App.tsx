@@ -21,6 +21,7 @@ import { ContactModalProvider } from "@/context/contact-modal-context";
 import { ContactModal } from "@/components/contact-modal";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { RequireAuth } from "@/components/require-auth";
+import { RequireAdmin } from "@/components/require-admin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,7 +51,7 @@ function Router() {
               <RequireAuth><TrackLookup /></RequireAuth>
             </Route>
             <Route path="/track/:id" component={() => <RequireAuth><ProjectView /></RequireAuth>} />
-            <Route path="/admin" component={AdminDashboard} />
+            <Route path="/admin" component={() => <RequireAdmin><AdminDashboard /></RequireAdmin>} />
             <Route path="/privacy-policy" component={PrivacyPolicy} />
             <Route path="/terms-of-service" component={TermsOfService} />
             <Route path="/about" component={About} />

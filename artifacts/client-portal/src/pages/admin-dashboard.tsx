@@ -1,86 +1,136 @@
 import { useState } from "react";
-import { useListProjects, useGetAdminStats, useUpdateProject, ProjectStatus, Project } from "@workspace/api-client-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useListProjects, ProjectStatus, Project } from "@workspace/api-client-react";
 import { format } from "date-fns";
-import { useQueryClient } from "@tanstack/react-query";
-import { 
-  BarChart3, Clock, CheckCircle2, AlertCircle, 
-  Search, SlidersHorizontal, Loader2, Edit3 
+import {
+  BarChart3, Clock, CheckCircle2, AlertCircle,
+  Search, SlidersHorizontal, Loader2, Edit3, LogOut,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/status-badge";
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter 
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { getAdminKey, clearAdminSession } from "@/components/require-admin";
 
+/* ── helpers ── */
+function adminHeaders(): HeadersInit {
+  return {
+    "Content-Type": "application/json",
+    "X-Admin-Key": getAdminKey(),
+  };
+}
+
+/* ── custom hooks ── */
+function useAdminStats() {
+  return useQuery({
+    queryKey: ["/api/admin/stats"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/stats", { headers: adminHeaders() });
+      if (!res.ok) throw new Error("Failed to load stats");
+      return res.json() as Promise<{
+        totalProjects: number;
+        byStatus: Record<string, number>;
+        recentProjects: Project[];
+      }>;
+    },
+  });
+}
+
+function useAdminUpdateProject() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ id, status, adminNotes }: { id: number; status: string; adminNotes: string }) => {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "PATCH",
+        headers: adminHeaders(),
+        body: JSON.stringify({ status, adminNotes }),
+      });
+      if (!res.ok) throw new Error("Failed to update project");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Project updated" });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+    },
+    onError: () => {
+      toast({ title: "Failed to update project", variant: "destructive" });
+    },
+  });
+}
+
+/* ── component ── */
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
-  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: stats, isLoading: statsLoading } = useGetAdminStats();
-  
-  // Transform tab to status filter if needed
-  const statusFilter = activeTab === "all" ? undefined : 
-                       activeTab === "active" ? ProjectStatus.in_progress : 
-                       activeTab === "review" ? ProjectStatus.in_review : 
-                       activeTab === "completed" ? ProjectStatus.delivered : undefined;
+  const { data: stats, isLoading: statsLoading } = useAdminStats();
 
-  const { data: projects, isLoading: projectsLoading } = useListProjects({
-    status: statusFilter,
-  });
+  const statusFilter =
+    activeTab === "all" ? undefined :
+    activeTab === "active" ? ProjectStatus.in_progress :
+    activeTab === "review" ? ProjectStatus.in_review :
+    activeTab === "completed" ? ProjectStatus.delivered : undefined;
 
-  const { mutate: updateProject, isPending: isUpdating } = useUpdateProject({
-    mutation: {
-      onSuccess: () => {
-        toast({ title: "Project updated successfully" });
-        queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-        setEditingProject(null);
-      },
-      onError: () => {
-        toast({ title: "Failed to update project", variant: "destructive" });
-      }
-    }
-  });
+  const { data: projects, isLoading: projectsLoading } = useListProjects({ status: statusFilter });
 
-  const handleSaveEdit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editingProject) return;
+  const { mutate: updateProject, isPending: isUpdating } = useAdminUpdateProject();
 
-    const formData = new FormData(e.currentTarget);
-    updateProject({
-      id: editingProject.id,
-      data: {
-        status: formData.get("status") as ProjectStatus,
-        adminNotes: formData.get("adminNotes") as string,
-      }
-    });
-  };
-
-  const filteredProjects = projects?.filter(p => 
-    p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredProjects = projects?.filter((p) =>
+    p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.clientName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  function handleSaveEdit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editingProject) return;
+    const fd = new FormData(e.currentTarget);
+    updateProject({
+      id: editingProject.id,
+      status: fd.get("status") as string,
+      adminNotes: fd.get("adminNotes") as string,
+    }, {
+      onSuccess: () => setEditingProject(null),
+    });
+  }
+
+  function handleLogout() {
+    clearAdminSession();
+    window.location.reload();
+  }
 
   return (
     <div className="flex-1 bg-muted/30 py-8">
       <div className="container mx-auto px-4 space-y-8">
-        
+
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold font-display tracking-tight text-foreground">Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold font-display tracking-tight text-foreground">
+              Admin Dashboard
+            </h1>
             <p className="text-muted-foreground mt-1">Manage all client projects and track progress.</p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl gap-2"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </Button>
         </div>
 
         {/* Stats Row */}
@@ -103,7 +153,9 @@ export function AdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">In Progress</p>
-                <h3 className="text-2xl font-bold">{statsLoading ? "-" : stats?.byStatus?.[ProjectStatus.in_progress] || 0}</h3>
+                <h3 className="text-2xl font-bold">
+                  {statsLoading ? "-" : stats?.byStatus?.[ProjectStatus.in_progress] || 0}
+                </h3>
               </div>
             </CardContent>
           </Card>
@@ -114,7 +166,9 @@ export function AdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Needs Feedback</p>
-                <h3 className="text-2xl font-bold">{statsLoading ? "-" : stats?.byStatus?.[ProjectStatus.needs_feedback] || 0}</h3>
+                <h3 className="text-2xl font-bold">
+                  {statsLoading ? "-" : stats?.byStatus?.[ProjectStatus.needs_feedback] || 0}
+                </h3>
               </div>
             </CardContent>
           </Card>
@@ -125,7 +179,9 @@ export function AdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                <h3 className="text-2xl font-bold">{statsLoading ? "-" : stats?.byStatus?.[ProjectStatus.delivered] || 0}</h3>
+                <h3 className="text-2xl font-bold">
+                  {statsLoading ? "-" : stats?.byStatus?.[ProjectStatus.delivered] || 0}
+                </h3>
               </div>
             </CardContent>
           </Card>
@@ -144,11 +200,11 @@ export function AdminDashboard() {
             </Tabs>
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search projects..." 
+              <Input
+                placeholder="Search projects…"
                 className="pl-9 h-9 rounded-full bg-muted/50 border-none"
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </CardHeader>
@@ -182,24 +238,24 @@ export function AdminDashboard() {
                           <span className="block truncate max-w-[200px]" title={project.title}>
                             {project.title}
                           </span>
-                          <span className="text-xs text-muted-foreground font-mono mt-0.5 block">ID: {project.id}</span>
+                          <span className="text-xs text-muted-foreground font-mono mt-0.5 block">
+                            ID: {project.id}
+                          </span>
                         </td>
+                        <td className="px-6 py-4 text-muted-foreground">{project.clientName}</td>
                         <td className="px-6 py-4 text-muted-foreground">
-                          {project.clientName}
-                        </td>
-                        <td className="px-6 py-4 text-muted-foreground">
-                          {project.projectType.replace('_', ' ')}
+                          {project.projectType.replace("_", " ")}
                         </td>
                         <td className="px-6 py-4">
                           <StatusBadge status={project.status} />
                         </td>
                         <td className="px-6 py-4 text-muted-foreground">
-                          {format(new Date(project.createdAt), 'MMM d, yyyy')}
+                          {format(new Date(project.createdAt), "MMM d, yyyy")}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={() => setEditingProject(project)}
                           >
@@ -226,7 +282,7 @@ export function AdminDashboard() {
                 Update the progress or leave notes for {editingProject?.clientName}.
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-6 py-4">
               <div className="space-y-2">
                 <Label>Status</Label>
@@ -235,9 +291,9 @@ export function AdminDashboard() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.values(ProjectStatus).map(status => (
+                    {Object.values(ProjectStatus).map((status) => (
                       <SelectItem key={status} value={status}>
-                        {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        {status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -246,21 +302,26 @@ export function AdminDashboard() {
 
               <div className="space-y-2">
                 <Label>Admin Notes (Visible to client)</Label>
-                <Textarea 
-                  name="adminNotes" 
+                <Textarea
+                  name="adminNotes"
                   defaultValue={editingProject?.adminNotes || ""}
                   className="rounded-xl min-h-[100px]"
-                  placeholder="E.g., We're waiting on the final logo assets before we can proceed..."
+                  placeholder="E.g., We're waiting on the final logo assets before we can proceed…"
                 />
               </div>
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditingProject(null)} className="rounded-xl">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingProject(null)}
+                className="rounded-xl"
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isUpdating} className="rounded-xl">
-                {isUpdating ? "Saving..." : "Save Changes"}
+                {isUpdating ? "Saving…" : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>
