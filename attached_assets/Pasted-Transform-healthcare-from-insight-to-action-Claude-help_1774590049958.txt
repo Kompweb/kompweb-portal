@@ -1,0 +1,205 @@
+Transform healthcare from insight to action
+Claude helps healthcare organizations move faster without sacrificing accuracy, safety, or compliance. Less administrative work, more time with the people you serve.
+
+Get started
+Get started
+Contact sales
+Contact sales
+Your thinking partner
+From health startups to enterprise organizations, teams innovate faster with Claude.
+
+
+Authorization
+
+Insurance
+
+Triaging
+
+Documentation
+Prompt
+Help me review this prior authorization for a Medicare patient needing a robotic-assisted lung biopsy. Validate credentials and codes, check coverage requirements, flag missing documentation, and draft a prior authorization recommendation.
+
+Attachments
+Fax - Medicare prior auth request
+4kb
+PDF
+Patient history physical
+5kb
+‍DOC
+Prior Authorization Review
+Request Summary
+Patient: X23F2
+
+Procedure: Robotic-Assisted Peripheral Lung Biopsy (CPT 32405)
+
+Provider: Dr. Sarah Chen, Pulmonology Associates
+
+Submitted: December 18, 2025
+
+Validation Checks
+Provider NPI
+Status: ✓ Verified
+
+CPT Code (32405)
+Status: ✓ Verified billable
+
+ICD-10 (R91.1)
+Status: ✓ Verified
+
+Coverage Policy
+Status: ✓ LCD L38319 applies
+
+Medical Necessity (LCD L38319)
+Pulmonary nodule on imaging
+Documentation: 2.3cm spiculated nodule, RUL
+
+Status: ✓ Met
+
+Tissue diagnosis warranted
+Documentation: PET SUV 4.2, concerning for malignancy
+
+Status: ✓ Met
+
+Surgical candidate
+Documentation: FEV1 78% predicted
+
+Status: ✓ Met
+
+Less invasive approach tried
+Documentation: Prior bronchoscopy non-diagnostic
+
+Status: ✓ Met
+
+Recommendation
+✓ APPROVE
+
+All LCD L38319 criteria met. Provider verified.
+
+Audit Trail
+NPI lookup
+
+Source: NPI Registry MCP
+ICD-10 validation
+
+Source: ICD-10 Database MCP
+Coverage search
+
+Source: CMS Coverage Database MCP
+Documentation review
+
+Source: Uploaded files
+Prior authorization
+Prior authorization reviews take hours of cross-referencing while patients wait. Claude flags documentation gaps, catches who's been overlooked, and drafts requests ready for review.
+
+Powering leading healthcare organizations
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Prev
+
+
+
+
+
+
+
+
+
+
+
+
+Next
+logo
+logo
+logo
+logo
+logo
+logo
+logo
+logo
+logo
+Claude connects to your healthcare ecosystem
+Coverage policies, coding systems, and clinical guidelines, all in one place.
+
+Explore connectors
+Explore connectors
+Built for healthcare
+AI you can trust
+Claude is built on HIPAA-ready infrastructure with safety guardrails designed for healthcare. Answers can be traced back to the source, so you can verify before you act.
+
+Powerful and contextual
+Claude understands the complexity of medical coding, payer rules, and clinical decisions. It reviews your records and policies, then shows you where the answers came from. Work that took days now takes minutes.
+
+Made for healthcare
+Claude can connect to the data you need: CMS Coverage Database, ICD-10, NPI Registry, or PubMed. Sample skills give you a starting point to customize workflows with your organization's policies, data, and use cases.
+
+Your partner in better care
+We're investing in healthcare for the long term with a dedicated healthcare team, an expanding network of data partners like Function, HealthEx, Apple Health, Android Health Connect, and capabilities that grow with you.
+
+Case study
+Banner Health
+Banner Health is tackling physician burnout with Claude. See how they built an AI platform that's helping physicians focus on patient care.
+
+Read story
+Read story
+Case study
+Qualified Health
+Qualified Health uses Claude to identify patients who qualify for life-saving treatments but would otherwise go undetected.
+
+Read story
+Read story
+Case study
+Elation
+Elation Health reduced chart review time by 61% with Claude, helping primary care clinicians spend less time on documentation and more on patients.
+
+Read story
+Read story
+Case study
+Carta Healthcare
+Carta Healthcare uses Claude to reduce clinical data processing time by 66% while achieving 99% accuracy.
+
+Read story
+Read story
+Video
+
+Tune in to watch Anthropic CEO and Co-founder Dario Amodei share his vision for AI in healthcare and life sciences, along with an executive customer panel.
+
+Watch
+Watch
+Get started with Claude
+Healthcare customers can access Claude via Claude for Enterprise and the Claude Platform. 
+
+See pricing
+See pricing
+More resources
+Advancing Claude in healthcare and the life sciences
+Advancing Claude in healthcare and the life sciences
+Blog
+Blog
+The Enterprise AI Transformation Guide for Healthcare & Life Sciences
+The Enterprise AI Transformation Guide for Healthcare & Life Sciences
+eBook
+eBook
+Allow Claude to connect directly to FHIR-compliant systems to read and work with your data
+Allow Claude to connect directly to FHIR-compliant systems to read and work with your data
+Skill
+Skill
