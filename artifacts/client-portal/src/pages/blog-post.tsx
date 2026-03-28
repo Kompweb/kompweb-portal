@@ -10,6 +10,7 @@ interface Post {
   title: string;
   excerpt: string;
   accent: string;
+  image: string;
   content: string;
 }
 
@@ -24,6 +25,7 @@ const POSTS: Post[] = [
     excerpt:
       "From automated lead follow-up to invoice generation, AI agents handle the work that used to eat 3–4 hours a day. Here's how we set them up for our clients.",
     accent: "from-violet-500/20 to-transparent",
+    image: "/images/blog/ai-agents.png",
     content: `
 ## The Hidden Cost of Repetitive Work
 
@@ -89,6 +91,7 @@ If you're spending more than an hour a day on any single repetitive task, it's w
     excerpt:
       "Most businesses lose 60% of inbound leads because nobody follows up fast enough. CRM automation closes that gap — automatically, every time.",
     accent: "from-sky-500/20 to-transparent",
+    image: "/images/blog/crm-automation.png",
     content: `
 ## The Follow-Up Problem
 
@@ -166,6 +169,7 @@ The setup takes about a week. The ROI is visible within the first month.
     excerpt:
       "A beautiful site that doesn't generate leads is just digital art. We break down the five conversion mistakes we see on almost every business website.",
     accent: "from-emerald-500/20 to-transparent",
+    image: "/images/blog/web-design-conversion.png",
     content: `
 ## Beautiful ≠ Effective
 
@@ -238,6 +242,7 @@ None of these require a redesign. A site that converts is a site that makes it e
     excerpt:
       "Most GTM setups we audit are broken — missing conversions, double-firing tags, and garbage data. Here's how to do it properly from scratch.",
     accent: "from-amber-500/20 to-transparent",
+    image: "/images/blog/google-tag-manager.png",
     content: `
 ## Why Most GTM Setups Are Broken
 
@@ -338,6 +343,7 @@ A properly set-up GTM account gives you data you can actually make decisions wit
     excerpt:
       "We've ranked hundreds of local service pages. The strategies that work have changed significantly — here's what our data shows for this year.",
     accent: "from-rose-500/20 to-transparent",
+    image: "/images/blog/seo-service-businesses.png",
     content: `
 ## What Changed and Why It Matters
 
@@ -411,6 +417,7 @@ Local SEO compounds. The businesses that are consistently doing these basics —
     excerpt:
       "We don't just build AI systems for clients — we use them internally. This is an honest look at what we use, what saves time, and what's still overhyped.",
     accent: "from-fuchsia-500/20 to-transparent",
+    image: "/images/blog/ai-tools-workflow.png",
     content: `
 ## Why This Is Worth Writing
 
@@ -593,8 +600,14 @@ export function BlogPost() {
           </p>
         </div>
 
-        {/* ── Divider ── */}
-        <div className="h-px bg-white/[0.07] mb-10" />
+        {/* ── Hero image ── */}
+        <div className="rounded-2xl overflow-hidden mb-10 border border-white/[0.07]">
+          <img
+            src={post.image}
+            alt={post.title}
+            className="w-full h-56 md:h-72 object-cover"
+          />
+        </div>
 
         {/* ── Article body ── */}
         <article className="prose-custom">

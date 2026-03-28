@@ -13,6 +13,7 @@ const POSTS = [
       "From automated lead follow-up to invoice generation, AI agents handle the work that used to eat 3–4 hours a day.",
     tagColor: "text-violet-400 bg-violet-500/10 border-violet-500/20",
     accentColor: "violet",
+    image: "/images/blog/ai-agents.png",
   },
   {
     slug: "crm-automation-guide",
@@ -24,6 +25,7 @@ const POSTS = [
       "Most businesses lose 60% of inbound leads because nobody follows up fast enough. CRM automation closes that gap — automatically.",
     tagColor: "text-sky-400 bg-sky-500/10 border-sky-500/20",
     accentColor: "sky",
+    image: "/images/blog/crm-automation.png",
   },
   {
     slug: "web-design-conversion",
@@ -35,6 +37,7 @@ const POSTS = [
       "A beautiful site that doesn't generate leads is just digital art. Here are the five conversion mistakes we see on almost every website.",
     tagColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
     accentColor: "emerald",
+    image: "/images/blog/web-design-conversion.png",
   },
   {
     slug: "google-tag-manager-setup",
@@ -46,6 +49,7 @@ const POSTS = [
       "Most GTM setups we audit are broken — missing conversions, double-firing tags, and garbage data. Here's how to do it right.",
     tagColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
     accentColor: "amber",
+    image: "/images/blog/google-tag-manager.png",
   },
   {
     slug: "seo-for-service-businesses",
@@ -57,6 +61,7 @@ const POSTS = [
       "We've ranked hundreds of local service pages. The strategies that work have changed — here's what our data shows.",
     tagColor: "text-rose-400 bg-rose-500/10 border-rose-500/20",
     accentColor: "rose",
+    image: "/images/blog/seo-service-businesses.png",
   },
   {
     slug: "building-with-ai-tools",
@@ -68,6 +73,7 @@ const POSTS = [
       "We don't just build AI systems for clients — we use them internally. An honest look at what saves time and what's still overhyped.",
     tagColor: "text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/20",
     accentColor: "fuchsia",
+    image: "/images/blog/ai-tools-workflow.png",
   },
 ];
 
@@ -398,13 +404,21 @@ export function Blog() {
                 href={`/blog/${post.slug}`}
                 className="group block rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden hover:border-white/[0.18] hover:bg-white/[0.03] transition-all duration-200"
               >
-                {/* Colored top bar */}
-                <div className={`h-1 w-full ${
-                  post.accentColor === "violet" ? "bg-gradient-to-r from-violet-500 to-violet-500/0" :
-                  post.accentColor === "emerald" ? "bg-gradient-to-r from-emerald-500 to-emerald-500/0" :
-                  post.accentColor === "rose" ? "bg-gradient-to-r from-rose-500 to-rose-500/0" :
-                  "bg-gradient-to-r from-white/20 to-transparent"
-                }`} />
+                {/* Cover image */}
+                <div className="relative h-44 overflow-hidden">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                  <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                    post.accentColor === "violet" ? "bg-gradient-to-r from-violet-500 to-violet-500/0" :
+                    post.accentColor === "emerald" ? "bg-gradient-to-r from-emerald-500 to-emerald-500/0" :
+                    post.accentColor === "rose" ? "bg-gradient-to-r from-rose-500 to-rose-500/0" :
+                    "bg-gradient-to-r from-white/20 to-transparent"
+                  }`} />
+                </div>
                 <div className="p-6">
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-semibold uppercase tracking-wide mb-4 ${post.tagColor}`}>
                     <Tag size={8} /> {post.tag}
@@ -442,8 +456,16 @@ export function Blog() {
               <Link
                 key={post.slug}
                 href={`/blog/${post.slug}`}
-                className="group flex items-start gap-4 p-5 rounded-2xl border border-white/[0.07] bg-white/[0.01] hover:border-white/[0.15] hover:bg-white/[0.03] transition-all duration-200"
+                className="group flex items-start gap-4 p-4 rounded-2xl border border-white/[0.07] bg-white/[0.01] hover:border-white/[0.15] hover:bg-white/[0.03] transition-all duration-200"
               >
+                {/* Thumbnail */}
+                <div className="w-20 h-20 shrink-0 rounded-xl overflow-hidden">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide ${post.tagColor}`}>
