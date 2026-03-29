@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Private / auth-gated routes — do not index
+Disallow: /admin
+Disallow: /submit
+Disallow: /track
+
+Sitemap: https://www.kompweb.com/sitemap.xml
